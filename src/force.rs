@@ -16,9 +16,11 @@ pub fn compute_density_pressure(psys: &mut ParticleSystem, kernel: &SPHKernel) {
     psys
         .particles
         .par_iter_mut()
-        .for_each(|pi| {
-            let mut density = 0.0;
-            for pj in &all_particles {
+        .enumerate()
+        .for_each(|(i, pi)| {
+            let mut density = mass * kernel.w_poly6(0.0);
+            for &j in &psys.neighbors[i] {
+                let pj = &all_particles[j];
                 let r2 = squared_distance(pi.position, pj.position);
                 density += mass * kernel.w_poly6(r2);
             }
@@ -39,10 +41,8 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
         .enumerate()
         .for_each(|(i, pi)| {
             let mut force = [0.0; 3];
-            for (j, pj) in all_particles.iter().enumerate() {
-                if i == j {
-                    continue;
-                }
+            for &j in &psys.neighbors[i] {
+                let pj = &all_particles[j];
 
                 let r_vec = vector_sub(pj.position, pi.position);
                 let r2 = dot(r_vec, r_vec);
