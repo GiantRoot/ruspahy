@@ -12,6 +12,8 @@ pub struct Particle {
 /// 组成模拟区域的粒子集合。
 pub struct ParticleSystem {
     pub particles: Vec<Particle>,
+    /// 每个粒子的邻居索引列表
+    pub neighbors: Vec<Vec<usize>>, 
 }
 
 impl ParticleSystem {
@@ -37,7 +39,8 @@ impl ParticleSystem {
                 }
             }
         }
-        Self { particles }
+        let neighbors = vec![Vec::new(); particles.len()];
+        Self { particles, neighbors }
     }
 
     /// 为每个粒子构建邻域列表。
@@ -45,7 +48,8 @@ impl ParticleSystem {
     /// 目前还是代理实现，系统在 [`crate::force`]
     /// 中采用全对形工的算法。
     pub fn build_neighbor_list(&mut self) {
-        // TODO: 实现高效的邻域搜索
+        let h = self.mean_spacing();
+        self.neighbors = crate::neighbor::build_neighbor_list(&self.particles, h);
     }
 
     /// 计算每个粒子受到的力。
