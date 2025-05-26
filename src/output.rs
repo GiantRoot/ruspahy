@@ -1,7 +1,13 @@
+//! Output utilities.
+//!
+//! Currently only a very simple VTK writer is provided for visualizing the
+//! particle set.
+
 use crate::particle::ParticleSystem;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
+/// Write the particle positions and pressure values to a VTK file.
 pub fn write_vtk(psys: &ParticleSystem, filename: &str) {
     let file = File::create(filename).expect("Unable to create file");
     let mut writer = BufWriter::new(file);

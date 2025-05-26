@@ -1,3 +1,6 @@
+//! Smoothing kernel functions used by the SPH solver.
+
+/// Precomputed constants for common SPH kernels.
 pub struct SPHKernel {
     pub h: f64,         // smoothing length
     pub h2: f64,        // h^2
@@ -7,6 +10,7 @@ pub struct SPHKernel {
 }
 
 impl SPHKernel {
+    /// Construct kernel coefficients for a given smoothing length `h`.
     pub fn new(h: f64) -> Self {
         let h2 = h * h;
         let poly6_coef = 315.0 / (64.0 * std::f64::consts::PI * h.powi(9));
@@ -21,6 +25,7 @@ impl SPHKernel {
         }
     }
 
+    /// Poly6 kernel used for density estimation.
     pub fn w_poly6(&self, r2: f64) -> f64 {
         if r2 < self.h2 {
             let diff = self.h2 - r2;
@@ -30,6 +35,7 @@ impl SPHKernel {
         }
     }
 
+    /// Gradient of the spiky kernel used for pressure forces.
     pub fn grad_w_spiky(&self, r: f64, dir: [f64; 3]) -> [f64; 3] {
         if r > 0.0 && r < self.h {
             let coeff = self.spiky_grad_coef * (self.h - r).powi(2) / r;
@@ -39,6 +45,7 @@ impl SPHKernel {
         }
     }
 
+    /// Laplacian of the viscosity kernel.
     pub fn lap_w_viscosity(&self, r: f64) -> f64 {
         if r < self.h {
             self.viscosity_lap_coef * (self.h - r)

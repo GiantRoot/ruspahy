@@ -1,8 +1,9 @@
 # ruspahy
 
-Short for Rust Smoothed Particle Hydrodynamics.
+Short for **Rust Smoothed Particle Hydrodynamics**.
 
-使用Rust语言，编写光滑粒子流体动力学SPH计算软件。
+使用Rust语言编写的SPH(光滑粒子流体动力学)模拟原型。该项目目前处于
+早期阶段，主要用于实验和学习目的。
 
 
 ## 需求文档
@@ -14,3 +15,23 @@ Short for Rust Smoothed Particle Hydrodynamics.
 5. 需要能够设置不同材料之间的界面属性
 6. 界面有强连接界面（可以承担拉、压和剪切应力），弱连接接触界面（不能承担拉应力）和可变连接界面（特定的温度压力条件下，由弱连接转变为强连接）
 7. 固体材料可以为弹塑性、弹脆性和纯弹性材料
+
+## 使用方法
+
+1. 安装 [Rust](https://www.rust-lang.org/) 工具链。
+2. 在项目目录下运行 `cargo run --release` 启动模拟。
+3. 配置文件位于 `assets/config.toml`，可调整粒子间距、时间步长等参数。
+
+生成的 VTK 文件保存在 `output/` 目录，可用 Paraview 等软件查看。
+
+## 项目结构
+
+```
+src/            源码实现
+assets/         默认配置文件
+output/         模拟输出（已在 .gitignore 中排除）
+```
+
+主要模块包括 `particle` (粒子与系统定义)、`force` (力计算)、
+`integrator` (时间积分)、`output` (结果输出) 以及 `sph_kernel`
+ (核心核函数实现)。
