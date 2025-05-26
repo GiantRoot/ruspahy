@@ -4,18 +4,11 @@
 //! 按照光滑粒子法(SPH)的核函数计算相互作用，持续推进模
 //! 拟并定期输出 VTK 文件以便可视化。
 
-mod particle;
-mod sph_kernel;
-mod neighbor;
-mod force;
-mod integrator;
-mod output;
-mod config;
-mod material;
+use ruspahy::particle::ParticleSystem;
+use ruspahy::output::write_vtk;
+use ruspahy::integrator::integrate;
+use ruspahy::config;
 
-use crate::particle::ParticleSystem;
-use crate::output::write_vtk;
-use crate::integrator::integrate;
 
 fn main() {
     // 从配置文件读取模拟参数
