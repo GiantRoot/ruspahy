@@ -28,4 +28,10 @@ pub fn write_vtk(psys: &ParticleSystem, filename: &str) {
     for p in &psys.particles {
         writeln!(writer, "{}", p.pressure).unwrap();
     }
+
+    writeln!(writer, "\nSCALARS material_id int 1").unwrap();
+    writeln!(writer, "LOOKUP_TABLE default").unwrap();
+    for p in &psys.particles {
+        writeln!(writer, "{}", p.material_id).unwrap();
+    }
 }

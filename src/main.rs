@@ -11,6 +11,7 @@ mod force;
 mod integrator;
 mod output;
 mod config;
+mod material;
 
 use crate::particle::ParticleSystem;
 use crate::output::write_vtk;

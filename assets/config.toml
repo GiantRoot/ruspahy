@@ -1,5 +1,25 @@
-grid = [10, 10, 1]
+grid = [10, 10, 10]
 spacing = 0.1
 time_step = 0.001
 num_steps = 100
 output_interval = 10
+
+# Materials definition
+[[materials]]
+id = 0
+name = "matrix"
+material_type = "elastic"
+density = 1000.0
+youngs_modulus = 1e5
+
+[[materials]]
+id = 1
+name = "reinforcement"
+material_type = "elastoplastic"
+density = 1200.0
+youngs_modulus = 2e5
+
+[[interfaces]]
+mat_a = 0
+mat_b = 1
+interface_type = "strong"
