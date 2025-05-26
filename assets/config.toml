@@ -1,0 +1,5 @@
+grid = [10, 10, 1]
+spacing = 0.1
+time_step = 0.001
+num_steps = 100
+output_interval = 10

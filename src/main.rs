@@ -1,32 +1,30 @@
-use ruspahy::{Particle, SPH, Vec2};
+mod particle;
+mod sph_kernel;
+mod neighbor;
+mod force;
+mod integrator;
+mod output;
+mod config;
+
+use crate::particle::ParticleSystem;
+use crate::output::write_vtk;
+use crate::integrator::integrate;
 
 fn main() {
-    let mut particles = Vec::new();
-    particles.push(Particle {
-        pos: Vec2::new(0.0, 0.5),
-        vel: Vec2::zero(),
-        force: Vec2::zero(),
-        mass: 1.0,
-        density: 0.0,
-        pressure: 0.0,
-    });
+    let config = config::load_config("assets/config.toml");
+    let mut psys = ParticleSystem::new(&config);
 
-    particles.push(Particle {
-        pos: Vec2::new(0.1, 0.5),
-        vel: Vec2::zero(),
-        force: Vec2::zero(),
-        mass: 1.0,
-        density: 0.0,
-        pressure: 0.0,
-    });
+    for step in 0..config.num_steps {
+        psys.build_neighbor_list();
+        psys.compute_forces();
+        integrate(&mut psys, config.time_step);
 
-    let mut sph = SPH::new(particles, 0.1, 1000.0, 2000.0, 0.1, 0.001);
-
-    for step in 0..10 {
-        sph.step();
-        println!("step {}: pos0=({:.3}, {:.3}), pos1=({:.3}, {:.3})",
-            step,
-            sph.particles[0].pos.x, sph.particles[0].pos.y,
-            sph.particles[1].pos.x, sph.particles[1].pos.y);
+        if step % config.output_interval == 0 {
+            let filename = format!("output/step_{:05}.vtk", step);
+            write_vtk(&psys, &filename);
+            println!("Output: {}", filename);
+        }
     }
+
+    println!("Simulation completed.");
 }

@@ -1,6 +1,13 @@
 [package]
 name = "ruspahy"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
+nalgebra = "0.32"   # 矩阵、向量计算
+kiddo = "5.0.3"     # KdTree 用于加速最近邻搜索
+rayon = "1.7"       # 并行计算加速
+ndarray = "0.15"
+csv = "1.1" 
+toml = "0.5"
+serde = { version = "1.0", features = ["derive"] }
