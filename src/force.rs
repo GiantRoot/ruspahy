@@ -1,14 +1,14 @@
-//! Force computation routines.
+//! 力计算相关函数。
 //!
-//! This module implements density, pressure and viscosity calculations for
-//! the SPH particles. The current implementation performs an all-pairs
-//! search which is not optimal for large particle counts.
+//! 本模块实现了粒子密度、压力和粘性等计算，
+//! 这些计算均依据 SPH 核函数完成。
+//! 当前实现采用全对遍历，在粒子数较多时效率不高。
 
 use crate::particle::{Particle, ParticleSystem};
 use crate::sph_kernel::SPHKernel;
 use rayon::prelude::*;
 
-/// Compute density and pressure for every particle.
+/// 计算每个粒子的密度和压力。
 pub fn compute_density_pressure(psys: &mut ParticleSystem, kernel: &SPHKernel) {
     let all_particles = psys.particles.clone();
     let mass = 1.0;
@@ -27,7 +27,7 @@ pub fn compute_density_pressure(psys: &mut ParticleSystem, kernel: &SPHKernel) {
         });
 }
 
-/// Compute pressure and viscosity forces.
+/// 计算压力与粘性力。
 pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
     let all_particles = psys.particles.clone();
     let mass = 1.0;
@@ -48,14 +48,14 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
                 let r2 = dot(r_vec, r_vec);
                 let r = r2.sqrt();
 
-                // pressure force
+                // 压力项
                 let grad_w = kernel.grad_w_spiky(r, r_vec);
                 let pressure_term = (pi.pressure + pj.pressure) / (2.0 * pj.density);
                 for k in 0..3 {
                     force[k] -= mass * pressure_term * grad_w[k];
                 }
 
-                // viscosity force
+                // 粘性项
                 let vel_diff = vector_sub(pj.velocity, pi.velocity);
                 let lap_w = kernel.lap_w_viscosity(r);
                 for k in 0..3 {
@@ -66,17 +66,17 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
         });
 }
 
-/// Utility: squared distance between two 3D points.
+/// 工具函数：求两三维点的平方距离。
 fn squared_distance(a: [f64; 3], b: [f64; 3]) -> f64 {
     (a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)
 }
 
-/// Subtract two 3D vectors.
+/// 三维向量相减。
 fn vector_sub(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
 
-/// Dot product of two 3D vectors.
+/// 三维向量点积。
 fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {
     a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
 }

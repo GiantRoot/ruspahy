@@ -1,4 +1,4 @@
-/// Representation of a single SPH particle.
+/// 单个 SPH 粒子的表示。
 #[derive(Clone)]
 pub struct Particle {
     pub position: [f64; 3],
@@ -9,14 +9,13 @@ pub struct Particle {
     pub material_id: usize,
 }
 
-/// Collection of particles that make up the simulation domain.
+/// 组成模拟区域的粒子集合。
 pub struct ParticleSystem {
     pub particles: Vec<Particle>,
 }
 
 impl ParticleSystem {
-    /// Create a regular grid of particles based on the simulation
-    /// configuration.
+    /// 根据模拟配置在规则网格上生成粒子。
     pub fn new(config: &crate::config::SimConfig) -> Self {
         let mut particles = Vec::new();
         for z in 0..config.grid[2] {
@@ -41,24 +40,25 @@ impl ParticleSystem {
         Self { particles }
     }
 
-    /// Build a neighbor list for each particle.
+    /// 为每个粒子构建邻域列表。
     ///
-    /// Currently this is a placeholder and the simulation uses an
-    /// all-pairs approach in [`crate::force`].
+    /// 目前还是代理实现，系统在 [`crate::force`]
+    /// 中采用全对形工的算法。
     pub fn build_neighbor_list(&mut self) {
-        // TODO: implement neighbor search
+        // TODO: 实现高效的邻域搜索
     }
 
-    /// Compute per-particle forces.
+    /// 计算每个粒子受到的力。
     ///
-    /// The actual force computation is delegated to [`crate::force`].
+    /// 其中的压力和粘性算法都在
+    /// [`crate::force`] 中实现。
     pub fn compute_forces(&mut self) {
         let kernel = crate::sph_kernel::SPHKernel::new(self.mean_spacing());
         crate::force::compute_density_pressure(self, &kernel);
         crate::force::compute_forces(self, &kernel);
     }
 
-    /// Estimate a smoothing length from the particle spacing.
+    /// 根据粒子间距推算平滑长度。
     fn mean_spacing(&self) -> f64 {
         if self.particles.is_empty() {
             0.1

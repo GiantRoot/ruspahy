@@ -1,12 +1,12 @@
-//! Neighbor search utilities.
+//! 邻域搜索工具。
 //!
-//! This module contains stubs for a future grid or spatial hashing based
-//! neighbor search. Currently the simulation performs an all-pairs search
-//! in `force::compute_forces`.
+//! 本模块尚未实现真正的网格或空间哈希邻域搜索，
+//! 目前在 `force::compute_forces` 中仍使用全对遍历，
+//! 对大量粒子而言效率较低。
 
-/// Build the neighbor list for all particles.
+/// 为所有粒子构建邻域列表。
 ///
-/// The implementation is left as future work.
+/// 具体实现留作后续工作。
 pub fn build_neighbor_list() {
-    // To be implemented: grid-based neighbor search or spatial hashing
+    // TODO: 网格或空间哈希的邻域搜索算法
 }
