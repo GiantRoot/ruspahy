@@ -1,11 +1,11 @@
-//! Time integration of particle motion.
+//! 粒子运动的时间积分。
 //!
-//! A simple explicit Euler integrator is provided which updates velocities
-//! and positions using the forces computed for each particle.
+//! 这里采用显式 Euler 积分器，根据粒子所受的力
+//! 更新其速度和位置。
 
 use crate::particle::ParticleSystem;
 
-/// Advance all particles by one time step using explicit Euler.
+/// 使用显式 Euler 方法推进一个时间步。
 pub fn integrate(psys: &mut ParticleSystem, dt: f64) {
     for p in &mut psys.particles {
         for i in 0..3 {

@@ -1,13 +1,12 @@
-//! Output utilities.
+//! 输出工具。
 //!
-//! Currently only a very simple VTK writer is provided for visualizing the
-//! particle set.
+//! 目前仅提供一个非常简单的 VTK 写出器，用于可视化粒子集合。
 
 use crate::particle::ParticleSystem;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
-/// Write the particle positions and pressure values to a VTK file.
+/// 将粒子位置和压力写入 VTK 文件。
 pub fn write_vtk(psys: &ParticleSystem, filename: &str) {
     let file = File::create(filename).expect("Unable to create file");
     let mut writer = BufWriter::new(file);

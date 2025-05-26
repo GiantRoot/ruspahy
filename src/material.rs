@@ -1,12 +1,11 @@
-//! Material definitions and interface types.
+//! 材料定义及界面类型。
 //!
-//! The project supports multiple solid materials. Each particle carries a
-//! `material_id` referencing one of these materials. Interfaces describe how
-//! different materials interact with each other.
+//! 项目支持多种固体材料，每个粒子带有 `material_id` 指向其材质。
+//! 接口用于描述不同材料之间的相互作用。
 
 use serde::Deserialize;
 
-/// Different constitutive behaviors for solids.
+/// 固体的不同本构类型。
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MaterialType {
@@ -15,7 +14,7 @@ pub enum MaterialType {
     Brittle,
 }
 
-/// Simple material properties.
+/// 简单的材料属性。
 #[derive(Clone, Deserialize)]
 pub struct Material {
     pub id: usize,
@@ -25,7 +24,7 @@ pub struct Material {
     pub youngs_modulus: f64,
 }
 
-/// Connection behavior between two materials.
+/// 两种材料之间的连接方式。
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum InterfaceType {
@@ -34,7 +33,7 @@ pub enum InterfaceType {
     Variable,
 }
 
-/// Interface configuration.
+/// 材料界面配置。
 #[derive(Clone, Deserialize)]
 pub struct Interface {
     pub mat_a: usize,

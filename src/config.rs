@@ -1,15 +1,14 @@
-//! Configuration loading utilities.
+//! 配置加载工具。
 //!
-//! The `SimConfig` structure stores simulation parameters that are loaded
-//! from a TOML file. The [`load_config`] function reads the file and
-//! deserializes it using `serde`.
+//! `SimConfig` 结构保存从 TOML 文件读取的模拟参数，
+//! [`load_config`] 函数负责读取并通过 `serde` 反序列化。
 
 use std::fs;
 use std::path::Path;
 use serde::Deserialize;
 use crate::material::{Interface, Material};
 
-/// Parameters that control the SPH simulation.
+/// 控制 SPH 模拟的参数集合。
 #[derive(Deserialize)]
 pub struct SimConfig {
     pub grid: [usize; 3],
@@ -23,7 +22,7 @@ pub struct SimConfig {
     pub interfaces: Vec<Interface>,
 }
 
-/// Load a [`SimConfig`] from a TOML file.
+/// 从 TOML 文件加载 [`SimConfig`]。
 pub fn load_config<P: AsRef<Path>>(path: P) -> SimConfig {
     let content = fs::read_to_string(path).expect("Failed to read config file");
     toml::from_str(&content).expect("Invalid TOML format")
