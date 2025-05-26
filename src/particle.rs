@@ -43,6 +43,70 @@ impl ParticleSystem {
         Self { particles, neighbors }
     }
 
+    /// 创建两个相同半径的球体，用于碰撞模拟。
+    pub fn two_spheres(
+        center1: [f64; 3],
+        center2: [f64; 3],
+        radius: f64,
+        spacing: f64,
+        velocity1: [f64; 3],
+        velocity2: [f64; 3],
+        material_id1: usize,
+        material_id2: usize,
+    ) -> Self {
+        fn add_sphere(
+            particles: &mut Vec<Particle>,
+            center: [f64; 3],
+            radius: f64,
+            spacing: f64,
+            velocity: [f64; 3],
+            material_id: usize,
+        ) {
+            let n = (radius / spacing).ceil() as i32;
+            let r2 = radius * radius;
+            for ix in -n..=n {
+                for iy in -n..=n {
+                    for iz in -n..=n {
+                        let dx = ix as f64 * spacing;
+                        let dy = iy as f64 * spacing;
+                        let dz = iz as f64 * spacing;
+                        if dx * dx + dy * dy + dz * dz <= r2 {
+                            particles.push(Particle {
+                                position: [center[0] + dx, center[1] + dy, center[2] + dz],
+                                velocity,
+                                force: [0.0; 3],
+                                density: 1000.0,
+                                pressure: 0.0,
+                                material_id,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut particles = Vec::new();
+        add_sphere(
+            &mut particles,
+            center1,
+            radius,
+            spacing,
+            velocity1,
+            material_id1,
+        );
+        add_sphere(
+            &mut particles,
+            center2,
+            radius,
+            spacing,
+            velocity2,
+            material_id2,
+        );
+
+        let neighbors = vec![Vec::new(); particles.len()];
+        Self { particles, neighbors }
+    }
+
     /// 为每个粒子构建邻域列表。
     ///
     /// 目前还是代理实现，系统在 [`crate::force`]
