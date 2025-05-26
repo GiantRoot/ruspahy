@@ -18,6 +18,7 @@ pub enum MaterialType {
 
 /// 简单的材料属性。
 #[derive(Clone, Deserialize)]
+#[allow(dead_code)]
 pub struct Material {
     pub id: usize,
     pub name: String,
@@ -46,6 +47,7 @@ pub enum InterfaceType {
 
 /// 材料界面配置。
 #[derive(Clone, Deserialize)]
+#[allow(dead_code)]
 pub struct Interface {
     pub mat_a: usize,
     pub mat_b: usize,

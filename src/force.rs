@@ -4,7 +4,7 @@
 //! 这些计算均依据 SPH 核函数完成。
 //! 当前实现采用全对遍历，在粒子数较多时效率不高。
 
-use crate::particle::{Particle, ParticleSystem};
+use crate::particle::ParticleSystem;
 use crate::sph_kernel::SPHKernel;
 use rayon::prelude::*;
 

@@ -10,6 +10,7 @@ use crate::material::{Interface, Material};
 
 /// 控制 SPH 模拟的参数集合。
 #[derive(Deserialize)]
+#[allow(dead_code)]
 pub struct SimConfig {
     pub grid: [usize; 3],
     pub spacing: f64,
