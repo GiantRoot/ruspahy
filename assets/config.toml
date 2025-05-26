@@ -15,11 +15,15 @@ youngs_modulus = 1e5
 [[materials]]
 id = 1
 name = "reinforcement"
-material_type = "elastoplastic"
+material_type = "elastoplastic_damage"
 density = 1200.0
 youngs_modulus = 2e5
+yield_strength = 5e3
+hardening_modulus = 1e4
+damage_threshold = 0.2
 
 [[interfaces]]
 mat_a = 0
 mat_b = 1
 interface_type = "strong"
+bond_strength = 1.0
