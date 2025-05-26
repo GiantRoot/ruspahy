@@ -1,6 +1,13 @@
+//! Force computation routines.
+//!
+//! This module implements density, pressure and viscosity calculations for
+//! the SPH particles. The current implementation performs an all-pairs
+//! search which is not optimal for large particle counts.
+
 use crate::particle::{Particle, ParticleSystem};
 use crate::sph_kernel::SPHKernel;
 
+/// Compute density and pressure for every particle.
 pub fn compute_density_pressure(psys: &mut ParticleSystem, kernel: &SPHKernel) {
     let particles = &mut psys.particles;
     let mass = 1.0; // assume unit mass
@@ -18,6 +25,7 @@ pub fn compute_density_pressure(psys: &mut ParticleSystem, kernel: &SPHKernel) {
     }
 }
 
+/// Compute pressure and viscosity forces.
 pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
     let particles = &mut psys.particles;
     let mass = 1.0;
@@ -52,14 +60,17 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
     }
 }
 
+/// Utility: squared distance between two 3D points.
 fn squared_distance(a: [f64; 3], b: [f64; 3]) -> f64 {
     (a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)
 }
 
+/// Subtract two 3D vectors.
 fn vector_sub(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
     [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 }
 
+/// Dot product of two 3D vectors.
 fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {
     a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
 }
