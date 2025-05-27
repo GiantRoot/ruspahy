@@ -28,9 +28,22 @@ pub fn write_vtk(psys: &ParticleSystem, filename: &str) {
         writeln!(writer, "{}", p.pressure).unwrap();
     }
 
+    writeln!(writer, "\nSCALARS stress float 1").unwrap();
+    writeln!(writer, "LOOKUP_TABLE default").unwrap();
+    for p in &psys.particles {
+        writeln!(writer, "{}", p.stress).unwrap();
+    }
+
     writeln!(writer, "\nSCALARS material_id int 1").unwrap();
     writeln!(writer, "LOOKUP_TABLE default").unwrap();
     for p in &psys.particles {
         writeln!(writer, "{}", p.material_id).unwrap();
+    }
+
+    writeln!(writer, "\nSCALARS material_type int 1").unwrap();
+    writeln!(writer, "LOOKUP_TABLE default").unwrap();
+    for p in &psys.particles {
+        let t = psys.materials[p.material_id].material_type as i32;
+        writeln!(writer, "{}", t).unwrap();
     }
 }

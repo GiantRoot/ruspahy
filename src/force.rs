@@ -66,6 +66,22 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
         });
 }
 
+/// 根据压力值计算简化的等效应力，并考虑材料屈服
+pub fn compute_stress(psys: &mut ParticleSystem) {
+    for p in &mut psys.particles {
+        let yield_strength = psys
+            .materials
+            .get(p.material_id)
+            .and_then(|m| m.yield_strength)
+            .unwrap_or(f64::INFINITY);
+        let mut sigma = p.pressure.abs();
+        if sigma > yield_strength {
+            sigma = yield_strength;
+        }
+        p.stress = sigma;
+    }
+}
+
 /// 工具函数：求两三维点的平方距离。
 fn squared_distance(a: [f64; 3], b: [f64; 3]) -> f64 {
     (a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)
