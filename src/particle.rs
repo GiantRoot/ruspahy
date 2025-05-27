@@ -6,6 +6,8 @@ pub struct Particle {
     pub force: [f64; 3],
     pub density: f64,
     pub pressure: f64,
+    /// Von Mises 应力或其它简化表示
+    pub stress: f64,
     pub material_id: usize,
 }
 
@@ -13,7 +15,9 @@ pub struct Particle {
 pub struct ParticleSystem {
     pub particles: Vec<Particle>,
     /// 每个粒子的邻居索引列表
-    pub neighbors: Vec<Vec<usize>>, 
+    pub neighbors: Vec<Vec<usize>>,
+    /// 系统中可用的材料列表
+    pub materials: Vec<crate::material::Material>,
 }
 
 impl ParticleSystem {
@@ -34,78 +38,16 @@ impl ParticleSystem {
                         force: [0.0; 3],
                         density: 1000.0,
                         pressure: 0.0,
+                        stress: 0.0,
                         material_id: 0,
                     });
                 }
             }
         }
         let neighbors = vec![Vec::new(); particles.len()];
-        Self { particles, neighbors }
+        Self { particles, neighbors, materials: config.materials.clone() }
     }
 
-    /// 创建两个相同半径的球体，用于碰撞模拟。
-    pub fn two_spheres(
-        center1: [f64; 3],
-        center2: [f64; 3],
-        radius: f64,
-        spacing: f64,
-        velocity1: [f64; 3],
-        velocity2: [f64; 3],
-        material_id1: usize,
-        material_id2: usize,
-    ) -> Self {
-        fn add_sphere(
-            particles: &mut Vec<Particle>,
-            center: [f64; 3],
-            radius: f64,
-            spacing: f64,
-            velocity: [f64; 3],
-            material_id: usize,
-        ) {
-            let n = (radius / spacing).ceil() as i32;
-            let r2 = radius * radius;
-            for ix in -n..=n {
-                for iy in -n..=n {
-                    for iz in -n..=n {
-                        let dx = ix as f64 * spacing;
-                        let dy = iy as f64 * spacing;
-                        let dz = iz as f64 * spacing;
-                        if dx * dx + dy * dy + dz * dz <= r2 {
-                            particles.push(Particle {
-                                position: [center[0] + dx, center[1] + dy, center[2] + dz],
-                                velocity,
-                                force: [0.0; 3],
-                                density: 1000.0,
-                                pressure: 0.0,
-                                material_id,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        let mut particles = Vec::new();
-        add_sphere(
-            &mut particles,
-            center1,
-            radius,
-            spacing,
-            velocity1,
-            material_id1,
-        );
-        add_sphere(
-            &mut particles,
-            center2,
-            radius,
-            spacing,
-            velocity2,
-            material_id2,
-        );
-
-        let neighbors = vec![Vec::new(); particles.len()];
-        Self { particles, neighbors }
-    }
 
     /// 为每个粒子构建邻域列表。
     ///
@@ -124,6 +66,7 @@ impl ParticleSystem {
         let kernel = crate::sph_kernel::SPHKernel::new(self.mean_spacing());
         crate::force::compute_density_pressure(self, &kernel);
         crate::force::compute_forces(self, &kernel);
+        crate::force::compute_stress(self);
     }
 
     /// 根据粒子间距推算平滑长度。
