@@ -34,6 +34,7 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
     let all_particles = psys.particles.clone();
     let mass = 1.0;
     let viscosity = 0.1;
+    let interfaces = psys.interfaces.clone();
 
     psys
         .particles
@@ -60,6 +61,24 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
                 let lap_w = kernel.lap_w_viscosity(r);
                 for k in 0..3 {
                     force[k] += viscosity * mass * vel_diff[k] / pj.density * lap_w;
+                }
+
+                // 界面粘结力
+                if let Some(interface) = interfaces.iter().find(|iface| {
+                    (iface.mat_a == pi.material_id && iface.mat_b == pj.material_id)
+                        || (iface.mat_a == pj.material_id && iface.mat_b == pi.material_id)
+                }) {
+                    if r < kernel.h {
+                        let dir = if r > 0.0 {
+                            [r_vec[0] / r, r_vec[1] / r, r_vec[2] / r]
+                        } else {
+                            [0.0; 3]
+                        };
+                        let coeff = interface.bond_strength * (kernel.h - r) / kernel.h;
+                        for k in 0..3 {
+                            force[k] += coeff * dir[k];
+                        }
+                    }
                 }
             }
             pi.force = force;
