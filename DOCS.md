@@ -16,6 +16,20 @@ output/       保存模拟过程中产生的 VTK 文件
 
 下面将按模块说明每个文件及其关键函数的作用。
 
+## 模块关系概览
+
+```
+Config -> Main -> ParticleSystem
+             |       |-- Neighbor
+             |       |-- Force --+-- SPH Kernel
+             |       |           \-- Material
+             |       \-- Integrator
+             \-- Output
+```
+
+主程序(`main.rs`)加载配置后创建 `ParticleSystem`，粒子系统依次调用 `neighbor` 构建邻域，
+通过 `force` 和 `sph_kernel` 计算物理量，在 `integrator` 中更新粒子位置，最终由 `output` 写出结果。
+
 ## src/config.rs
 
 - **作用**：负责从 `TOML` 格式的配置文件读取模拟参数。
@@ -53,9 +67,18 @@ output/       保存模拟过程中产生的 VTK 文件
 
 - **作用**：提供常见的 SPH 平滑核函数及其系数。
 - **数学背景**：
-  - **Poly6 核**：用于密度估计，形式为 \( W(r) = C (h^2 - r^2)^3 \)。
-  - **Spiky 核梯度**：用于压力项，公式 \( \nabla W(r) = -C (h - r)^2 \frac{r}{|r|} \)。
-  - **Viscosity 核拉普拉斯**：用于粘性力计算。
+  - **Poly6 核**：用于密度估计，形式为
+    $$
+    W_{\text{poly6}}(r,h) = \frac{315}{64\pi h^9}(h^2 - r^2)^3.
+    $$
+  - **Spiky 核梯度**：用于压力项，公式
+    $$
+    \nabla W_{\text{spiky}}(r,h) = -\frac{45}{\pi h^6}(h-r)^2 \frac{\mathbf{r}}{r}.
+    $$
+  - **Viscosity 核拉普拉斯**：用于粘性力计算，表达式
+    $$
+    \nabla^2 W_{\text{visc}}(r,h) = \frac{45}{\pi h^6}(h - r).
+    $$
 - **主要接口**：
   - `SPHKernel::new` 根据平滑长度预计算常数【F:src/sph_kernel.rs†L12-L26】。
   - `w_poly6`、`grad_w_spiky` 和 `lap_w_viscosity` 分别实现上述核函数【F:src/sph_kernel.rs†L28-L55】。
@@ -64,15 +87,36 @@ output/       保存模拟过程中产生的 VTK 文件
 
 - **作用**：根据 SPH 理论计算粒子的密度、压力、粘性及界面作用力。
 - **实现细节**：
-  - `compute_density_pressure` 使用 `w_poly6` 对邻域粒子求和得到密度，并利用简化的状态方程 \( p = k(\rho-\rho_0) \) 计算压力【F:src/force.rs†L11-L29】。
-  - `compute_forces` 结合压力梯度、粘性项和界面粘结力求得粒子受力，其中压力项使用 `grad_w_spiky`，粘性项使用 `lap_w_viscosity`【F:src/force.rs†L32-L97】。
-  - `compute_stress` 根据压力值计算等效应力，并考虑材料屈服限制【F:src/force.rs†L100-L113】。
+  - `compute_density_pressure` 首先利用
+    $$
+    \rho_i = \sum_j m_j W_{ij}, \qquad
+    p_i = k(\rho_i - \rho_0)
+    $$
+    对邻域粒子求和得到密度与压力【F:src/force.rs†L11-L29】。
+  - `compute_forces` 综合压力梯度、粘性项和界面粘结力求得总受力，其中
+    $$
+    \mathbf{f}_i = -\sum_j m_j\Bigl(\tfrac{p_i}{\rho_i^2}+\tfrac{p_j}{\rho_j^2}\Bigr)\nabla W_{ij}
+    +\mu \sum_j m_j \tfrac{\mathbf{v}_j-\mathbf{v}_i}{\rho_j}\nabla^2 W_{ij}
+    +\mathbf{f}_{\text{interface}}.
+    $$
+    【F:src/force.rs†L32-L97】。
+  - `compute_stress` 根据压力值计算等效应力并与屈服强度比较，常用公式为
+    $$
+    \sigma_{\text{eq}} = \sqrt{\tfrac{3}{2}\, \mathbf{s}:\mathbf{s}},
+    $$
+    超出屈服后按材料模型进行修正【F:src/force.rs†L100-L113】。
 
 ## src/integrator.rs
 
 - **作用**：执行时间积分更新粒子运动。
 - **数学原理**：显式 Euler 积分，对每个粒子的运动方程 \( \frac{d\mathbf{v}}{dt} = \frac{\mathbf{f}}{\rho} \) 进行离散化。
 - **函数**：`integrate` 逐粒子更新速度和位置【F:src/integrator.rs†L8-L16】。
+
+时间离散形式可写为
+$$
+\mathbf{v}_i^{n+1} = \mathbf{v}_i^n + \Delta t\,\frac{\mathbf{f}_i}{\rho_i},\qquad
+\mathbf{x}_i^{n+1} = \mathbf{x}_i^n + \Delta t\,\mathbf{v}_i^{n+1}.
+$$
 
 ## src/output.rs
 
@@ -88,7 +132,11 @@ output/       保存模拟过程中产生的 VTK 文件
 本项目基于 SPH 方法求解固体动力学问题，其关键思想为：
 
 1. **核函数逼近**：任意物理量 \( A(\mathbf{r}) \) 可写成周围粒子的加权和 \( A(\mathbf{r}) \approx \sum_j m_j \frac{A_j}{\rho_j} W(|\mathbf{r}-\mathbf{r}_j|, h) \)。文中的 `w_poly6`、`grad_w_spiky` 和 `lap_w_viscosity` 分别提供密度估计、压力梯度和粘性项所需的核函数。
-2. **动量方程离散化**：粒子受力由压力梯度、粘性和界面粘结等项组成，计算完成后通过 `integrate` 更新速度与位置。
+2. **动量方程离散化**：粒子受力由压力梯度、粘性和界面粘结等项组成，其离散形式可写为
+   $$
+   \frac{d\mathbf{v}_i}{dt} = \frac{\mathbf{f}_i}{\rho_i}.
+   $$
+   计算完成后通过 `integrate` 更新速度与位置。
 3. **邻域搜索**：为提高效率，采用均匀网格在局部范围内查找相互作用的粒子，避免 \(O(N^2)\) 级别的全对计算。
 
 ## 结语
