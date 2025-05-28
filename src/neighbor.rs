@@ -39,6 +39,9 @@ pub fn build_neighbor_list(particles: &[Particle], radius: f64) -> Vec<Vec<usize
                             }
                             if squared_distance(p.position, particles[j].position) <= r2 {
                                 neighbors[i].push(j);
+                                if !neighbors[j].contains(&i) {
+                                    neighbors[j].push(i);
+                                }
                             }
                         }
                     }

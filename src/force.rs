@@ -31,58 +31,70 @@ pub fn compute_density_pressure(psys: &mut ParticleSystem, kernel: &SPHKernel) {
 
 /// 计算压力与粘性力。
 pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
-    let all_particles = psys.particles.clone();
     let mass = 1.0;
     let viscosity = 0.1;
-    let interfaces = psys.interfaces.clone();
 
-    psys
-        .particles
-        .par_iter_mut()
-        .enumerate()
-        .for_each(|(i, pi)| {
-            let mut force = [0.0; 3];
-            for &j in &psys.neighbors[i] {
-                let pj = &all_particles[j];
+    for p in &mut psys.particles {
+        p.force = [0.0; 3];
+    }
 
-                let r_vec = vector_sub(pj.position, pi.position);
-                let r2 = dot(r_vec, r_vec);
-                let r = r2.sqrt();
+    for i in 0..psys.particles.len() {
+        for &j in &psys.neighbors[i] {
+            if j <= i {
+                continue;
+            }
 
-                // 压力项
-                let grad_w = kernel.grad_w_spiky(r, r_vec);
-                let pressure_term = (pi.pressure + pj.pressure) / (2.0 * pj.density);
-                for k in 0..3 {
-                    force[k] -= mass * pressure_term * grad_w[k];
-                }
+            let mat_a = psys.particles[i].material_id;
+            let mat_b = psys.particles[j].material_id;
+            let interface = psys.find_interface(mat_a, mat_b).cloned();
 
-                // 粘性项
-                let vel_diff = vector_sub(pj.velocity, pi.velocity);
-                let lap_w = kernel.lap_w_viscosity(r);
-                for k in 0..3 {
-                    force[k] += viscosity * mass * vel_diff[k] / pj.density * lap_w;
-                }
+            // 安全地同时获取两个粒子的可变引用
+            let (pi, pj) = {
+                let (left, right) = psys.particles.split_at_mut(j);
+                (&mut left[i], &mut right[0])
+            };
 
-                // 界面粘结力
-                if let Some(interface) = interfaces.iter().find(|iface| {
-                    (iface.mat_a == pi.material_id && iface.mat_b == pj.material_id)
-                        || (iface.mat_a == pj.material_id && iface.mat_b == pi.material_id)
-                }) {
-                    if r < kernel.h {
-                        let dir = if r > 0.0 {
-                            [r_vec[0] / r, r_vec[1] / r, r_vec[2] / r]
-                        } else {
-                            [0.0; 3]
-                        };
-                        let coeff = interface.bond_strength * (kernel.h - r) / kernel.h;
-                        for k in 0..3 {
-                            force[k] += coeff * dir[k];
-                        }
+            let r_vec = vector_sub(pj.position, pi.position);
+            let r2 = dot(r_vec, r_vec);
+            let r = r2.sqrt();
+
+            // 压力项（对称形式以满足动量守恒）
+            let grad_w = kernel.grad_w_spiky(r, r_vec);
+            let pressure_term =
+                mass * (pi.pressure / (pi.density * pi.density) + pj.pressure / (pj.density * pj.density));
+            let mut pair_force = [0.0; 3];
+            for k in 0..3 {
+                pair_force[k] -= pressure_term * grad_w[k];
+            }
+
+            // 粘性项
+            let vel_diff = vector_sub(pj.velocity, pi.velocity);
+            let lap_w = kernel.lap_w_viscosity(r);
+            for k in 0..3 {
+                pair_force[k] += viscosity * mass * vel_diff[k] / pj.density * lap_w;
+            }
+
+            // 界面粘结力
+            if let Some(interface) = interface {
+                if r < kernel.h {
+                    let dir = if r > 0.0 {
+                        [r_vec[0] / r, r_vec[1] / r, r_vec[2] / r]
+                    } else {
+                        [0.0; 3]
+                    };
+                    let coeff = interface.bond_strength * (kernel.h - r) / kernel.h;
+                    for k in 0..3 {
+                        pair_force[k] += coeff * dir[k];
                     }
                 }
             }
-            pi.force = force;
-        });
+
+            for k in 0..3 {
+                pi.force[k] += pair_force[k];
+                pj.force[k] -= pair_force[k];
+            }
+        }
+    }
 }
 
 /// 根据压力值计算简化的等效应力，并考虑材料屈服
