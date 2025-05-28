@@ -27,7 +27,7 @@ fn main() {
         // 定期将粒子状态写入 VTK 文件，以便
         // 使用 Paraview 等工具视化
         if step % config.output_interval == 0 {
-            let filename = format!("output/step_{:05}.vtk", step);
+            let filename = format!("output/step_{}.vtk", step);
             write_vtk(&psys, &filename);
             println!("Output: {}", filename);
         }
