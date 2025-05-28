@@ -82,7 +82,7 @@ Config -> Main -> ParticleSystem
 - **作用**：实现邻域搜索算法，避免全对遍历带来的高复杂度。
 - **算法原理**：使用均匀网格 (hash grid) 将粒子划分到立方体单元。对每个粒子，仅在其所在单元及相邻 26 个单元中搜索可能的邻居，计算平方距离判断是否在半径内。
 - **关键函数**：
-  - `build_neighbor_list` 根据给定半径返回每个粒子的邻居索引列表【F:src/neighbor.rs†L13-L53】。
+  - `build_neighbor_list` 根据给定半径返回每个粒子的邻居索引列表【F:src/neighbor.rs†L13-L57】。
 
 ## src/sph_kernel.rs
 
