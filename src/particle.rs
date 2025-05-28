@@ -135,23 +135,30 @@ impl ParticleSystem {
 
     /// 根据粒子间距推算平滑长度。
     fn mean_spacing(&self) -> f64 {
-        if self.particles.is_empty() {
-            0.1
-        } else {
-            let mut min_dist = f64::MAX;
-            for i in 0..self.particles.len() {
-                for j in i + 1..self.particles.len() {
-                    let d = (
-                        (self.particles[i].position[0] - self.particles[j].position[0]).powi(2)
-                            + (self.particles[i].position[1] - self.particles[j].position[1]).powi(2)
-                            + (self.particles[i].position[2] - self.particles[j].position[2]).powi(2)
-                    )
-                    .sqrt();
-                    if d < min_dist {
-                        min_dist = d;
-                    }
+        if self.particles.len() < 2 {
+            return 0.1;
+        }
+
+        let mut min_dist = f64::MAX;
+        for i in 0..self.particles.len() {
+            for j in i + 1..self.particles.len() {
+                let d = (
+                    (self.particles[i].position[0] - self.particles[j].position[0]).powi(2)
+                        + (self.particles[i].position[1] - self.particles[j].position[1]).powi(2)
+                        + (self.particles[i].position[2] - self.particles[j].position[2]).powi(2)
+                )
+                .sqrt();
+                if d < min_dist {
+                    min_dist = d;
                 }
             }
+        }
+
+        if !min_dist.is_finite() || min_dist == f64::MAX {
+            0.1
+        } else if min_dist <= 0.0 {
+            0.001
+        } else {
             min_dist
         }
     }

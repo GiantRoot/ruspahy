@@ -32,9 +32,9 @@ pub fn build_neighbor_list(particles: &[Particle], radius: f64) -> Vec<Vec<usize
             for dy in -1..=1 {
                 for dz in -1..=1 {
                     let cell = (
-                        base.0 + dx as i64,
-                        base.1 + dy as i64,
-                        base.2 + dz as i64,
+                        base.0.saturating_add(dx as i64),
+                        base.1.saturating_add(dy as i64),
+                        base.2.saturating_add(dz as i64),
                     );
                     if let Some(list) = grid.get(&cell) {
                         for &j in list {
@@ -42,7 +42,9 @@ pub fn build_neighbor_list(particles: &[Particle], radius: f64) -> Vec<Vec<usize
                                 continue;
                             }
                             if squared_distance(p.position, particles[j].position) <= r2 {
-                                neighbors[i].push(j);
+                                if !neighbors[i].contains(&j) {
+                                    neighbors[i].push(j);
+                                }
                                 if !neighbors[j].contains(&i) {
                                     neighbors[j].push(i);
                                 }
