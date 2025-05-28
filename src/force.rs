@@ -100,16 +100,34 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
 /// 根据压力值计算简化的等效应力，并考虑材料屈服
 pub fn compute_stress(psys: &mut ParticleSystem) {
     for p in &mut psys.particles {
-        let yield_strength = psys
-            .materials
-            .get(p.material_id)
-            .and_then(|m| m.yield_strength)
-            .unwrap_or(f64::INFINITY);
+        let mat = &psys.materials[p.material_id];
+        let yield_strength = mat.yield_strength.unwrap_or(f64::INFINITY);
+        let hardening = mat.hardening_modulus.unwrap_or(0.0);
+        let damage_threshold = mat.damage_threshold.unwrap_or(f64::INFINITY);
+
+        // 当前等效应力
         let mut sigma = p.pressure.abs();
-        if sigma > yield_strength {
-            sigma = yield_strength;
+        let mut yield_limit = yield_strength + hardening * p.plastic_strain;
+
+        if sigma > yield_limit {
+            // 线性硬化的简单返回映射
+            let delta_plastic = (sigma - yield_limit) / (mat.youngs_modulus + hardening);
+            p.plastic_strain += delta_plastic;
+            yield_limit += hardening * delta_plastic;
+
+            if p.plastic_strain > damage_threshold {
+                let excess = p.plastic_strain - damage_threshold;
+                let d = excess / damage_threshold;
+                p.damage = p.damage + d;
+                if p.damage > 1.0 {
+                    p.damage = 1.0;
+                }
+            }
+
+            sigma = yield_limit;
         }
-        p.stress = sigma;
+
+        p.stress = sigma * (1.0 - p.damage);
     }
 }
 
