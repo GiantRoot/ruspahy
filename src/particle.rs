@@ -27,6 +27,8 @@ pub struct ParticleSystem {
 }
 
 impl ParticleSystem {
+    /// 平滑长度与平均粒子间距的比例因子
+    const SMOOTHING_FACTOR: f64 = 1.5;
     /// 根据配置创建粒子集。若配置中提供 `spheres` 字段，则以球体布置粒子；
     /// 否则在规则网格上生成。
     pub fn new(config: &crate::config::SimConfig) -> Self {
@@ -104,7 +106,7 @@ impl ParticleSystem {
     /// 目前还是代理实现，系统在 [`crate::force`]
     /// 中采用全对形工的算法。
     pub fn build_neighbor_list(&mut self) {
-        let h = self.mean_spacing();
+        let h = self.smoothing_length();
         self.neighbors = crate::neighbor::build_neighbor_list(&self.particles, h);
     }
 
@@ -113,7 +115,7 @@ impl ParticleSystem {
     /// 其中的压力和粘性算法都在
     /// [`crate::force`] 中实现。
     pub fn compute_forces(&mut self) {
-        let kernel = crate::sph_kernel::SPHKernel::new(self.mean_spacing());
+        let kernel = crate::sph_kernel::SPHKernel::new(self.smoothing_length());
         crate::force::compute_density_pressure(self, &kernel);
         crate::force::compute_forces(self, &kernel);
         crate::force::compute_stress(self);
@@ -152,5 +154,10 @@ impl ParticleSystem {
             }
             min_dist
         }
+    }
+
+    /// 计算实际使用的平滑长度
+    fn smoothing_length(&self) -> f64 {
+        self.mean_spacing() * Self::SMOOTHING_FACTOR
     }
 }
