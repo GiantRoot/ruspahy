@@ -21,6 +21,8 @@ Short for **Rust Smoothed Particle Hydrodynamics**.
 1. 安装 [Rust](https://www.rust-lang.org/) 工具链。
 2. 在项目目录下运行 `cargo run --release` 启动模拟。
 3. 配置文件位于 `assets/config.toml`，可调整粒子间距、时间步长等参数。
+   当配置文件中包含 `[[spheres]]` 条目时，程序将根据给定的中心、
+   半径和初速度生成多个球体，可用于模拟颗粒碰撞等场景。
 
 生成的 VTK 文件保存在 `output/` 目录，可用 Paraview 等软件查看。
 

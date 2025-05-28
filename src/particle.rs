@@ -21,31 +21,66 @@ pub struct ParticleSystem {
 }
 
 impl ParticleSystem {
-    /// 根据模拟配置在规则网格上生成粒子。
+    /// 根据配置创建粒子集。若配置中提供 `spheres` 字段，则以球体布置粒子；
+    /// 否则在规则网格上生成。
     pub fn new(config: &crate::config::SimConfig) -> Self {
         let mut particles = Vec::new();
-        for z in 0..config.grid[2] {
-            for y in 0..config.grid[1] {
-                for x in 0..config.grid[0] {
-                    let pos = [
-                        x as f64 * config.spacing,
-                        y as f64 * config.spacing,
-                        z as f64 * config.spacing,
-                    ];
-                    particles.push(Particle {
-                        position: pos,
-                        velocity: [0.0; 3],
-                        force: [0.0; 3],
-                        density: 1000.0,
-                        pressure: 0.0,
-                        stress: 0.0,
-                        material_id: 0,
-                    });
+
+        if !config.spheres.is_empty() {
+            for s in &config.spheres {
+                Self::add_sphere(&mut particles, s, config.spacing);
+            }
+        } else {
+            for z in 0..config.grid[2] {
+                for y in 0..config.grid[1] {
+                    for x in 0..config.grid[0] {
+                        let pos = [
+                            x as f64 * config.spacing,
+                            y as f64 * config.spacing,
+                            z as f64 * config.spacing,
+                        ];
+                        particles.push(Particle {
+                            position: pos,
+                            velocity: [0.0; 3],
+                            force: [0.0; 3],
+                            density: 1000.0,
+                            pressure: 0.0,
+                            stress: 0.0,
+                            material_id: 0,
+                        });
+                    }
                 }
             }
         }
+
         let neighbors = vec![Vec::new(); particles.len()];
         Self { particles, neighbors, materials: config.materials.clone() }
+    }
+
+    /// 在给定粒子集合中添加球体分布的粒子。
+    fn add_sphere(particles: &mut Vec<Particle>, s: &crate::config::SphereConfig, spacing: f64) {
+        let n = (s.radius / spacing).ceil() as i32;
+        let r2 = s.radius * s.radius;
+        for ix in -n..=n {
+            for iy in -n..=n {
+                for iz in -n..=n {
+                    let dx = ix as f64 * spacing;
+                    let dy = iy as f64 * spacing;
+                    let dz = iz as f64 * spacing;
+                    if dx * dx + dy * dy + dz * dz <= r2 {
+                        particles.push(Particle {
+                            position: [s.center[0] + dx, s.center[1] + dy, s.center[2] + dz],
+                            velocity: s.velocity,
+                            force: [0.0; 3],
+                            density: 1000.0,
+                            pressure: 0.0,
+                            stress: 0.0,
+                            material_id: s.material_id,
+                        });
+                    }
+                }
+            }
+        }
     }
 
 

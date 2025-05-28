@@ -8,6 +8,17 @@ use std::path::Path;
 use serde::Deserialize;
 use crate::material::{Interface, Material};
 
+/// 初始球体设置，可用于模拟碰撞等场景。
+#[derive(Deserialize)]
+#[allow(dead_code)]
+pub struct SphereConfig {
+    pub center: [f64; 3],
+    pub radius: f64,
+    pub velocity: [f64; 3],
+    #[serde(default)]
+    pub material_id: usize,
+}
+
 /// 控制 SPH 模拟的参数集合。
 #[derive(Deserialize)]
 #[allow(dead_code)]
@@ -21,6 +32,8 @@ pub struct SimConfig {
     pub materials: Vec<Material>,
     #[serde(default)]
     pub interfaces: Vec<Interface>,
+    #[serde(default)]
+    pub spheres: Vec<SphereConfig>,
 }
 
 /// 从 TOML 文件加载 [`SimConfig`]。
