@@ -16,6 +16,27 @@ output/       保存模拟过程中产生的 VTK 文件
 
 下面将按模块说明每个文件及其关键函数的作用。
 
+## 核心算法流程
+
+典型的模拟过程可以用如下伪代码表示：
+
+```text
+load_config()
+init_particle_system()
+while time < end_time {
+    build_neighbor_list()
+    compute_density_pressure()
+    compute_forces()
+    integrate()
+    if step % output_interval == 0 {
+        write_vtk()
+    }
+}
+```
+
+其中 `build_neighbor_list` 负责邻域搜索，`compute_forces` 调用 `sph_kernel` 计算压力、
+粘性以及材料界面带来的作用力，`integrate` 则使用显式 Euler 更新粒子状态。
+
 ## 模块关系概览
 
 ```
