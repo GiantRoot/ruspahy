@@ -8,6 +8,10 @@ pub struct Particle {
     pub pressure: f64,
     /// Von Mises 应力或其它简化表示
     pub stress: f64,
+    /// 累积塑性应变
+    pub plastic_strain: f64,
+    /// 0~1 的损伤变量
+    pub damage: f64,
     pub material_id: usize,
 }
 
@@ -48,6 +52,8 @@ impl ParticleSystem {
                             density: 1000.0,
                             pressure: 0.0,
                             stress: 0.0,
+                            plastic_strain: 0.0,
+                            damage: 0.0,
                             material_id: 0,
                         });
                     }
@@ -82,6 +88,8 @@ impl ParticleSystem {
                             density: 1000.0,
                             pressure: 0.0,
                             stress: 0.0,
+                            plastic_strain: 0.0,
+                            damage: 0.0,
                             material_id: s.material_id,
                         });
                     }

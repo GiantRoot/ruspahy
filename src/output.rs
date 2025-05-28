@@ -34,6 +34,18 @@ pub fn write_vtk(psys: &ParticleSystem, filename: &str) {
         writeln!(writer, "{}", p.stress).unwrap();
     }
 
+    writeln!(writer, "\nSCALARS plastic_strain float 1").unwrap();
+    writeln!(writer, "LOOKUP_TABLE default").unwrap();
+    for p in &psys.particles {
+        writeln!(writer, "{}", p.plastic_strain).unwrap();
+    }
+
+    writeln!(writer, "\nSCALARS damage float 1").unwrap();
+    writeln!(writer, "LOOKUP_TABLE default").unwrap();
+    for p in &psys.particles {
+        writeln!(writer, "{}", p.damage).unwrap();
+    }
+
     writeln!(writer, "\nSCALARS material_id int 1").unwrap();
     writeln!(writer, "LOOKUP_TABLE default").unwrap();
     for p in &psys.particles {
