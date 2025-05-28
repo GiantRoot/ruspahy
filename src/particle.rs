@@ -18,6 +18,8 @@ pub struct ParticleSystem {
     pub neighbors: Vec<Vec<usize>>,
     /// 系统中可用的材料列表
     pub materials: Vec<crate::material::Material>,
+    /// 材料界面属性列表
+    pub interfaces: Vec<crate::material::Interface>,
 }
 
 impl ParticleSystem {
@@ -54,7 +56,12 @@ impl ParticleSystem {
         }
 
         let neighbors = vec![Vec::new(); particles.len()];
-        Self { particles, neighbors, materials: config.materials.clone() }
+        Self {
+            particles,
+            neighbors,
+            materials: config.materials.clone(),
+            interfaces: config.interfaces.clone(),
+        }
     }
 
     /// 在给定粒子集合中添加球体分布的粒子。
@@ -102,6 +109,18 @@ impl ParticleSystem {
         crate::force::compute_density_pressure(self, &kernel);
         crate::force::compute_forces(self, &kernel);
         crate::force::compute_stress(self);
+    }
+
+    /// 获取两种材料间的界面定义
+    pub fn find_interface(
+        &self,
+        mat_a: usize,
+        mat_b: usize,
+    ) -> Option<&crate::material::Interface> {
+        self.interfaces.iter().find(|iface| {
+            (iface.mat_a == mat_a && iface.mat_b == mat_b)
+                || (iface.mat_a == mat_b && iface.mat_b == mat_a)
+        })
     }
 
     /// 根据粒子间距推算平滑长度。
