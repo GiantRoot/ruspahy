@@ -11,27 +11,40 @@ use rayon::prelude::*;
 /// 计算每个粒子的密度和压力。
 pub fn compute_density_pressure(psys: &mut ParticleSystem, kernel: &SPHKernel) {
     let all_particles = psys.particles.clone();
-    let mass = 1.0;
+    let materials = psys.materials.clone();
+    let spacing = kernel.h / 1.5;
 
     psys
         .particles
         .par_iter_mut()
         .enumerate()
         .for_each(|(i, pi)| {
-            let mut density = mass * kernel.w_poly6(0.0);
+            let rho0_i = materials
+                .get(pi.material_id)
+                .map(|m| m.density)
+                .unwrap_or(1000.0);
+            let mass_i = rho0_i * spacing.powi(3);
+            let mut density = mass_i * kernel.w_poly6(0.0);
             for &j in &psys.neighbors[i] {
                 let pj = &all_particles[j];
+                let rho0_j = materials
+                    .get(pj.material_id)
+                    .map(|m| m.density)
+                    .unwrap_or(1000.0);
+                let mass_j = rho0_j * spacing.powi(3);
                 let r2 = squared_distance(pi.position, pj.position);
-                density += mass * kernel.w_poly6(r2);
+                density += mass_j * kernel.w_poly6(r2);
             }
             pi.density = density;
-            pi.pressure = 1000.0 * (density - 1000.0);
+            let k = 1000.0;
+            pi.pressure = k * (density - rho0_i);
         });
 }
 
 /// 计算压力与粘性力。
 pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
-    let mass = 1.0;
+    let materials = psys.materials.clone();
+    let spacing = kernel.h / 1.5;
     let viscosity = 0.1;
 
     for p in &mut psys.particles {
@@ -60,8 +73,9 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
 
             // 压力项（对称形式以满足动量守恒）
             let grad_w = kernel.grad_w_spiky(r, r_vec);
+            let mass_j = materials[pj.material_id].density * spacing.powi(3);
             let pressure_term =
-                mass * (pi.pressure / (pi.density * pi.density) + pj.pressure / (pj.density * pj.density));
+                mass_j * (pi.pressure / (pi.density * pi.density) + pj.pressure / (pj.density * pj.density));
             let mut pair_force = [0.0; 3];
             for k in 0..3 {
                 pair_force[k] -= pressure_term * grad_w[k];
@@ -71,7 +85,7 @@ pub fn compute_forces(psys: &mut ParticleSystem, kernel: &SPHKernel) {
             let vel_diff = vector_sub(pj.velocity, pi.velocity);
             let lap_w = kernel.lap_w_viscosity(r);
             for k in 0..3 {
-                pair_force[k] += viscosity * mass * vel_diff[k] / pj.density * lap_w;
+                pair_force[k] += viscosity * mass_j * vel_diff[k] / pj.density * lap_w;
             }
 
             // 界面粘结力
