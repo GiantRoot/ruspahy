@@ -1,25 +1,31 @@
-grid = [10, 10, 10]
-spacing = 0.1
+grid = [1, 1, 1]
+spacing = 1.0
 time_step = 0.01
-num_steps = 100
-output_interval = 1
+num_steps = 200
+output_interval = 10
+
+[bucket]
+radius = 15.0
+height = 50.0
+lid_speed = 21.0
+min_height = 6.0
 
 [[spheres]]
-center = [-0.5, 0.0, 0.0]
-radius = 0.3
-velocity = [0.1, 0.0, 0.0]
+center = [0.0, 0.0, 6.5]
+radius = 6.5
+velocity = [0.0, 0.0, 0.0]
 material_id = 0
 
 [[spheres]]
-center = [0.5, 0.0, 0.0]
-radius = 0.3
-velocity = [-0.1, 0.0, 0.0]
-material_id = 0
+center = [0.0, 0.0, 16.5]
+radius = 10.0
+velocity = [0.0, 0.0, 0.0]
+material_id = 1
 
 # Materials definition
 [[materials]]
 id = 0
-name = "matrix"
+name = "aluminum"
 material_type = "elastoplastic_damage"
 density = 2.7e-9
 youngs_modulus = 7.2e4
@@ -29,7 +35,7 @@ damage_threshold = 0.3
 
 [[materials]]
 id = 1
-name = "reinforcement"
+name = "copper"
 material_type = "elastoplastic_damage"
 density = 3.2e-9
 youngs_modulus = 4.15e5

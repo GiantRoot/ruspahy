@@ -22,7 +22,7 @@ fn main() {
         psys.build_neighbor_list();
         psys.compute_forces();
         // 对粒子位置和速度进行积分
-        integrate(&mut psys, config.time_step);
+        integrate(&mut psys, config.time_step, &config, step);
 
         // 定期将粒子状态写入 VTK 文件，以便
         // 使用 Paraview 等工具视化
