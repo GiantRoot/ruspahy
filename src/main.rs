@@ -1,4 +1,6 @@
-use nalgebra::{Vector3};
+use nalgebra::Vector3;
+use std::fs::{File, create_dir_all};
+use std::io::Write;
 
 /// Simple SPH particle structure.
 struct Particle {
@@ -95,6 +97,40 @@ fn apply_boundaries(p: &mut Particle, radius: f64, bottom: f64, lid: f64) {
     }
 }
 
+fn write_vtk(particles: &[Particle], step: usize) -> std::io::Result<()> {
+    create_dir_all("output")?;
+    let file_name = format!("output/step_{:04}.vtk", step);
+    let mut file = File::create(file_name)?;
+
+    writeln!(file, "# vtk DataFile Version 3.0")?;
+    writeln!(file, "SPH step {}", step)?;
+    writeln!(file, "ASCII")?;
+    writeln!(file, "DATASET POLYDATA")?;
+    writeln!(file, "POINTS {} float", particles.len())?;
+    for p in particles {
+        writeln!(file, "{} {} {}", p.position.x, p.position.y, p.position.z)?;
+    }
+
+    writeln!(file, "VERTICES {} {}", particles.len(), particles.len() * 2)?;
+    for i in 0..particles.len() {
+        writeln!(file, "1 {}", i)?;
+    }
+
+    writeln!(file, "POINT_DATA {}", particles.len())?;
+    writeln!(file, "VECTORS velocity float")?;
+    for p in particles {
+        writeln!(file, "{} {} {}", p.velocity.x, p.velocity.y, p.velocity.z)?;
+    }
+
+    writeln!(file, "SCALARS pressure float 1")?;
+    writeln!(file, "LOOKUP_TABLE default")?;
+    for p in particles {
+        writeln!(file, "{}", p.pressure)?;
+    }
+
+    Ok(())
+}
+
 fn main() {
     // Simulation parameters (micrometer units)
     let bucket_radius = 15.0;
@@ -110,7 +146,7 @@ fn main() {
     let dt = 0.005;
     let steps = 200;
 
-    for _step in 0..steps {
+    for step in 0..steps {
         lid_height -= lid_speed * dt;
         if lid_height < 0.0 { lid_height = 0.0; }
 
@@ -146,6 +182,8 @@ fn main() {
             p.position += p.velocity * dt;
             apply_boundaries(p, bucket_radius, 0.0, lid_height);
         }
+
+        write_vtk(&particles, step).unwrap();
     }
 
     println!("Simulation finished with {} particles", particles.len());
