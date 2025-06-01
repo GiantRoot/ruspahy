@@ -8,6 +8,18 @@ use std::path::Path;
 use serde::Deserialize;
 use crate::material::{Interface, Material};
 
+/// 圆柱形桶及其移动盖子的设置。
+#[derive(Deserialize, Clone)]
+#[allow(dead_code)]
+pub struct BucketConfig {
+    pub radius: f64,
+    pub height: f64,
+    /// 盖子向下移动的速度（每个时间单位下降量）
+    pub lid_speed: f64,
+    /// 盖子可移动到的最小高度
+    pub min_height: f64,
+}
+
 /// 初始球体设置，可用于模拟碰撞等场景。
 #[derive(Deserialize)]
 #[allow(dead_code)]
@@ -34,6 +46,8 @@ pub struct SimConfig {
     pub interfaces: Vec<Interface>,
     #[serde(default)]
     pub spheres: Vec<SphereConfig>,
+    #[serde(default)]
+    pub bucket: Option<BucketConfig>,
 }
 
 /// 从 TOML 文件加载 [`SimConfig`]。

@@ -4,6 +4,12 @@ time_step = 0.01
 num_steps = 100
 output_interval = 1
 
+[bucket]
+radius = 1.5
+height = 5.0
+lid_speed = 0.05
+min_height = 0.5
+
 [[spheres]]
 center = [-0.5, 0.0, 0.0]
 radius = 0.3

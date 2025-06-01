@@ -12,6 +12,7 @@ fn neighbor_single_particle() {
         materials: Vec::new(),
         interfaces: Vec::new(),
         spheres: Vec::new(),
+        bucket: None,
     };
 
     let mut ps = ParticleSystem::new(&config);
@@ -31,6 +32,7 @@ fn neighbor_small_spacing() {
         materials: Vec::new(),
         interfaces: Vec::new(),
         spheres: Vec::new(),
+        bucket: None,
     };
 
     let mut ps = ParticleSystem::new(&config);
