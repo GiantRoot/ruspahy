@@ -17,7 +17,8 @@ Short for **Rust Smoothed Particle Hydrodynamics**.
    默认配置描述了两个静止的金属球（直径 13 µm 与 20 µm）置于
    直径 30 µm、高度 50 µm 的桶内，盖子持续下降使空间逐渐被金属填满。
 
-生成的 VTK 文件保存在 `output/` 目录，可用 Paraview 等软件查看。
+程序每个时间步都会在 `output/` 目录下生成 `step_XXXX.vtk` 文件（`XXXX` 为步数），
+可直接在 Paraview 中加载以观察模拟过程。
 
 ## 项目结构
 

@@ -28,11 +28,7 @@ while time < end_time {
     compute_density_pressure()
     compute_forces()
     integrate()
-    if step % output_interval == 0 {
-        write_vtk()
-    }
-}
-```
+    write_vtk()  # 每个时间步均输出 VTK 文件
 
 其中 `build_neighbor_list` 负责邻域搜索，`compute_forces` 调用 `sph_kernel` 计算压力、
 粘性以及材料界面带来的作用力，`integrate` 则使用显式 Euler 更新粒子状态。
@@ -139,14 +135,9 @@ $$
 \mathbf{x}_i^{n+1} = \mathbf{x}_i^n + \Delta t\,\mathbf{v}_i^{n+1}.
 $$
 
-## src/output.rs
-
-- **作用**：将粒子属性写出为 VTK 文件便于可视化。
-- **主要函数**：`write_vtk` 输出位置、压力、等效应力及材料编号等数据【F:src/output.rs†L9-L48】。
-
 ## src/main.rs
 
-- **作用**：程序入口。加载配置后创建 `ParticleSystem`，在时间循环中依次构建邻域、计算力并积分，同时按设定的间隔输出结果文件【F:src/main.rs†L13-L36】。
+- **作用**：程序入口，同时定义 `write_vtk` 函数用以输出 VTK 文件。每个时间步都会调用该函数生成 `output/step_XXXX.vtk`，可在 Paraview 中观察模拟过程。
 
 ## 数学原理概述
 
