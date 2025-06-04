@@ -97,7 +97,13 @@ fn apply_boundaries(p: &mut Particle, radius: f64, bottom: f64, lid: f64) {
     }
 }
 
-fn write_vtk(particles: &[Particle], step: usize) -> std::io::Result<()> {
+fn write_vtk(
+    particles: &[Particle],
+    step: usize,
+    bucket_radius: f64,
+    bucket_height: f64,
+    lid_height: f64,
+) -> std::io::Result<()> {
     create_dir_all("output")?;
     let file_name = format!("output/step_{:04}.vtk", step);
     let mut file = File::create(file_name)?;
@@ -106,14 +112,64 @@ fn write_vtk(particles: &[Particle], step: usize) -> std::io::Result<()> {
     writeln!(file, "SPH step {}", step)?;
     writeln!(file, "ASCII")?;
     writeln!(file, "DATASET POLYDATA")?;
-    writeln!(file, "POINTS {} float", particles.len())?;
+
+    const SEGMENTS: usize = 32;
+    let num_bucket_pts = SEGMENTS * 3; // bottom, top and lid rings
+    writeln!(file, "POINTS {} float", particles.len() + num_bucket_pts)?;
+
+    // Particle positions
     for p in particles {
         writeln!(file, "{} {} {}", p.position.x, p.position.y, p.position.z)?;
+    }
+
+    // Bucket geometry vertices
+    for i in 0..SEGMENTS {
+        let angle = 2.0 * std::f64::consts::PI * (i as f64) / SEGMENTS as f64;
+        let x = bucket_radius * angle.cos();
+        let y = bucket_radius * angle.sin();
+        writeln!(file, "{} {} {}", x, y, 0.0)?;
+    }
+    for i in 0..SEGMENTS {
+        let angle = 2.0 * std::f64::consts::PI * (i as f64) / SEGMENTS as f64;
+        let x = bucket_radius * angle.cos();
+        let y = bucket_radius * angle.sin();
+        writeln!(file, "{} {} {}", x, y, bucket_height)?;
+    }
+    for i in 0..SEGMENTS {
+        let angle = 2.0 * std::f64::consts::PI * (i as f64) / SEGMENTS as f64;
+        let x = bucket_radius * angle.cos();
+        let y = bucket_radius * angle.sin();
+        writeln!(file, "{} {} {}", x, y, lid_height)?;
     }
 
     writeln!(file, "VERTICES {} {}", particles.len(), particles.len() * 2)?;
     for i in 0..particles.len() {
         writeln!(file, "1 {}", i)?;
+    }
+
+    let base_bottom = particles.len();
+    let base_top = base_bottom + SEGMENTS;
+    let base_lid = base_top + SEGMENTS;
+    let num_lines = SEGMENTS * 4;
+    writeln!(file, "LINES {} {}", num_lines, num_lines * 3)?;
+    // bottom ring
+    for i in 0..SEGMENTS {
+        let next = (i + 1) % SEGMENTS;
+        writeln!(file, "2 {} {}", base_bottom + i, base_bottom + next)?;
+    }
+    // top ring
+    for i in 0..SEGMENTS {
+        let next = (i + 1) % SEGMENTS;
+        writeln!(file, "2 {} {}", base_top + i, base_top + next)?;
+    }
+    // lid ring
+    for i in 0..SEGMENTS {
+        let next = (i + 1) % SEGMENTS;
+        writeln!(file, "2 {} {}", base_lid + i, base_lid + next)?;
+    }
+    // vertical lines
+    for i in 0..SEGMENTS {
+        writeln!(file, "2 {} {}", base_bottom + i, base_top + i)?;
     }
 
     writeln!(file, "POINT_DATA {}", particles.len())?;
@@ -183,7 +239,7 @@ fn main() {
             apply_boundaries(p, bucket_radius, 0.0, lid_height);
         }
 
-        write_vtk(&particles, step).unwrap();
+        write_vtk(&particles, step, bucket_radius, bucket_height, lid_height).unwrap();
     }
 
     println!("Simulation finished with {} particles", particles.len());
