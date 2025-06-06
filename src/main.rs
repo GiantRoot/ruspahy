@@ -105,7 +105,7 @@ fn write_vtk(
     lid_height: f64,
 ) -> std::io::Result<()> {
     create_dir_all("output")?;
-    let file_name = format!("output/step_{:04}.vtk", step);
+    let file_name = format!("output/step_{}.vtk", step);
     let mut file = File::create(file_name)?;
 
     writeln!(file, "# vtk DataFile Version 3.0")?;
