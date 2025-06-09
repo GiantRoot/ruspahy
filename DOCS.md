@@ -6,13 +6,13 @@
 
 所有逻辑均位于 `src/main.rs`：
 
-- `Particle` 结构保存位置、速度、密度和压力【F:src/main.rs†L5-L11】。
-- 常量定义平滑长度、参考密度等参数【F:src/main.rs†L13-L16】。
-- `kernel` 与 `grad_kernel` 实现三次样条核函数及其梯度【F:src/main.rs†L18-L43】。
-- `init_sphere` 在球体区域生成粒子分布【F:src/main.rs†L45-L70】。
-- `apply_boundaries` 处理桶壁与盖子的碰撞【F:src/main.rs†L72-L98】。
-- `write_vtk` 输出粒子状态为 VTK 文件【F:src/main.rs†L100-L132】。
-- `main` 函数组织完整的模拟流程【F:src/main.rs†L134-L189】。
+- `Particle` 结构保存位置、速度、密度、压力及材料类型【F:src/main.rs†L5-L12】。
+- 常量定义平滑长度、参考密度等参数【F:src/main.rs†L14-L17】。
+- `kernel` 与 `grad_kernel` 实现三次样条核函数及其梯度【F:src/main.rs†L19-L44】。
+- `init_sphere` 在球体区域生成粒子分布【F:src/main.rs†L46-L77】。
+- `apply_boundaries` 处理桶壁与盖子的碰撞【F:src/main.rs†L79-L105】。
+- `write_vtk` 仅输出粒子数据到 VTK 文件【F:src/main.rs†L107-L147】。
+- `main` 函数组织完整的模拟流程【F:src/main.rs†L150-L205】。
 
 ## 计算流程
 
