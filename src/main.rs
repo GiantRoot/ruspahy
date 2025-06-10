@@ -15,6 +15,7 @@ const SMOOTHING_LENGTH: f64 = 2.0;      // kernel radius
 const REST_DENSITY: f64 = 1.0;          // reference density
 const PARTICLE_MASS: f64 = 1.0;         // uniform mass
 const STIFFNESS: f64 = 1000.0;          // equation of state coefficient
+const GRAVITY: Vector3<f64> = Vector3::new(0.0, 0.0, -9.81); // gravity acceleration
 
 /// Cubic spline kernel in 3D
 fn kernel(r: f64) -> f64 {
@@ -76,30 +77,15 @@ fn init_sphere(
     particles
 }
 
-fn apply_boundaries(p: &mut Particle, radius: f64, bottom: f64, lid: f64) {
-    // Cylinder walls
-    let r_xy = (p.position.x.powi(2) + p.position.y.powi(2)).sqrt();
-    if r_xy > radius {
-        let scale = radius / r_xy;
-        p.position.x *= scale;
-        p.position.y *= scale;
-        p.velocity.x = 0.0;
-        p.velocity.y = 0.0;
-    }
-
-    // Bottom
-    if p.position.z < bottom {
-        p.position.z = bottom;
+/// Handle collision with the ground plane.
+///
+/// `ground` specifies the z-position of the plane and `restitution`
+/// controls the bounciness (1.0 = perfectly elastic).
+fn apply_ground(p: &mut Particle, ground: f64, restitution: f64) {
+    if p.position.z < ground {
+        p.position.z = ground;
         if p.velocity.z < 0.0 {
-            p.velocity.z = 0.0;
-        }
-    }
-
-    // Lid
-    if p.position.z > lid {
-        p.position.z = lid;
-        if p.velocity.z > 0.0 {
-            p.velocity.z = 0.0;
+            p.velocity.z = -p.velocity.z * restitution;
         }
     }
 }
@@ -148,23 +134,17 @@ fn write_vtk(particles: &[Particle], step: usize) -> std::io::Result<()> {
 }
 
 fn main() {
-    // Simulation parameters (micrometer units)
-    let bucket_radius = 15.0;
-    let bucket_height = 50.0;
-    let mut lid_height = bucket_height;
-    let lid_speed = 0.1; // µm per step
+    // Simulation parameters for a single falling sphere
+    let ground = 0.0;
+    let restitution = 0.8;
 
-    // Initialize two spheres
-    let mut particles = Vec::new();
-    particles.extend(init_sphere(Vector3::new(0.0, 0.0, 6.5), 6.5, 2.0, 1));
-    particles.extend(init_sphere(Vector3::new(0.0, 0.0, 16.5), 10.0, 2.0, 2));
+    // Initialize one sphere above the ground
+    let mut particles = init_sphere(Vector3::new(0.0, 0.0, 10.0), 5.0, 2.0, 1);
 
     let dt = 0.005;
     let steps = 200;
 
     for step in 0..steps {
-        lid_height -= lid_speed * dt;
-        if lid_height < 0.0 { lid_height = 0.0; }
 
         // Density and pressure
         for i in 0..particles.len() {
@@ -192,11 +172,12 @@ fn main() {
                 }
             }
             particles[i].velocity += accel * dt;
+            particles[i].velocity += GRAVITY * dt;
         }
 
         for p in &mut particles {
             p.position += p.velocity * dt;
-            apply_boundaries(p, bucket_radius, 0.0, lid_height);
+            apply_ground(p, ground, restitution);
         }
 
         write_vtk(&particles, step).unwrap();
